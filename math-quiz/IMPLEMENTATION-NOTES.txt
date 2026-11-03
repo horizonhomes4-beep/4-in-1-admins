@@ -1,0 +1,71 @@
+LATEST UPDATE - 20-QUESTION RANDOM QUIZZES, TOPIC SORTING AND BULK DELETE
+
+FILES CHANGED: quiz.js, quiz-admin.js, quiz-admin.html, quiz.css, index.html, math-quiz-question-template.xlsx
+NO DATABASE RULE CHANGE: the current database.rules.json already allows everything below.
+
+STUDENT QUIZZES
+ - Every quiz has 20 questions: one topic, or all topics mixed.
+ - Questions are picked at random from the student's class bank. Never-answered questions come first, questions from the
+   last two quizzes rest (cool-down), and up to 20% of a quiz brings back questions the student got wrong before.
+ - All topics: the 20 places are shared across topics (weak topics get double), so every topic appears and none dominates.
+ - Each saved result now also stores the question ids (qids) and the missed ones (qwrong). The history is rebuilt from the
+   database, so it still works after a device change or cleared browser data.
+ - If a class has fewer than 20 questions in a topic, the quiz uses what exists and says so. Repeats are unavoidable then.
+
+ADMIN > QUESTIONS
+ - Sort: Topic A-Z (grouped with a header per topic), Class, Newest, Status. Topic chips filter in one click.
+ - Each topic header shows published questions per class, with a warning where a class has under 20.
+ - Delete: one question, ticked questions, Delete topic (header button), or Delete ALL questions (asks you to type DELETE).
+ - Topic spelling is matched ignoring capitals/extra spaces, so "algebra" and "Algebra" stay one topic.
+ - Excel import warns when a topic/class ends up under 20 questions.
+
+EXCEL SAMPLE: now a full 20-question topic (Algebra, JSS 2) with a corrected Instructions sheet.
+ The built-in starter bank (quiz-seed.js) has fewer than 20 per topic, so topic quizzes stay short until you import more.
+
+MATHCLOUD MATH QUIZ - EMAIL/PASSWORD LOGIN AND ONE-DEVICE LOCK
+
+FILES CHANGED (replace these in your site)
+ index.html, quiz.js        student sign-in with email + password, device check, "device locked" screen with request button
+ quiz-admin.html, quiz-admin.js   create student logins, lock/unlock device, reset password, Device requests tab
+ admin-auth.js              admin sign-in (own session, separate from students; data loads only after an approved admin signs in)
+ admin-setup.html           one-time first administrator page (works with the new rules)
+ database.rules.json        NEW rules - publish these. They replace the old public read/write rules.
+ (delete database.rules.secure-template.json; it is replaced by database.rules.json)
+ Unchanged: quiz.css, site.css, quiz-seed.js, firebase-config.js, images.
+
+SETUP ORDER
+ 1. Firebase Console > Authentication > Sign-in method: enable Email/Password.
+ 2. Firebase Console > Realtime Database > Rules: paste database.rules.json and Publish.
+ 3. If you have no administrator yet: open admin-setup.html once, create the admin, then DELETE admin-setup.html.
+    (If an admin already exists in access/admins, skip this.)
+ 4. Open quiz-admin.html, sign in, create classes, then Students and logins > create each student (name, class, email, password).
+    Copy the login details shown and give them to the student. Passwords cannot be viewed again.
+
+HOW THE DEVICE LOCK WORKS
+ - A student's first successful sign-in locks the account to that browser/device.
+ - Any other device is refused and shows "locked to another device" with a Request device change button.
+ - The request appears in the admin Device requests tab. Approve = unlock; Reject = stays locked.
+ - Unlock (Students tab or Approve) signs the old device out. The next sign-in on any device becomes the new locked device.
+ - "Lock again" restores the lock if you unlocked by mistake before anyone signed in.
+ - Deactivating a student signs them out immediately.
+
+OLD PASSCODE STUDENTS
+ Students created before this update show "No login yet". Click Create login: the record, assignments and past results move to the new account.
+
+LIMITS TO KNOW
+ - A device is identified by an ID stored in the browser. Clearing browser data or using a private window counts as a new device and needs approval.
+ - Enforcement is in the app and the database rules (results can only be saved from the locked device). A technically skilled student with valid credentials
+   could still read the question bank from another device through developer tools. Fully hard enforcement needs Cloud Functions/custom claims.
+ - Students can read the question bank (needed for class quizzes). Per-class secrecy would need the questions stored per class.
+ - Deleting a student does not delete the Firebase Authentication account (browser code cannot). It simply cannot open Math Quiz any more.
+ - The free demo now runs from the 24 built-in sample questions in quiz-seed.js and needs no database access.
+ - Admin and student sign-ins are now separate sessions in the same browser (admin uses its own Firebase app 'mq-admin'), so you can test both side by side.
+   After updating, administrators must sign in once more on quiz-admin.html.
+ - Right-click/copy protection still applies, but selecting and pasting inside input boxes is now allowed so passwords and questions can be pasted.
+
+
+QUESTION BANK MANAGER (2026-10-30)
+- Added question-bank-manager.html and question-bank-manager.js for class-specific Excel export, upload, and deletion.
+- Main admin navigation links to the manager.
+- Removed duplicate quiz-admin-enhanced (1).html; retained quiz-admin-enhanced.html.
+- Student index.html includes an Administrator portal link; access remains protected by admin authentication.
